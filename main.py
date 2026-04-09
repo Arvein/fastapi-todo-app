@@ -4,6 +4,15 @@ from typing import Optional, List
 from uuid import UUID, uuid4
 
 app = FastAPI()
+from fastapi.responses import HTMLResponse
+from fastapi.staticfiles import StaticFiles
+import os
+
+# Если хотите, чтобы корневой URL отдавал index.html
+@app.get("/", response_class=HTMLResponse)
+async def get_index():
+    with open("index.html", "r", encoding="utf-8") as f:
+        return f.read()
 from fastapi.middleware.cors import CORSMiddleware
 
 app.add_middleware(

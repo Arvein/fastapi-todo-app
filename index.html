@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>NEON TODO | FastAPI + JS</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            min-height: 100vh;
+            background: radial-gradient(circle at 20% 30%, #0a0f1e, #03050b);
+            font-family: 'Segoe UI', 'Poppins', system-ui, -apple-system, 'Inter', sans-serif;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: repeating-linear-gradient(0deg, rgba(0,255,255,0.02) 0px, rgba(0,255,255,0.02) 2px, transparent 2px, transparent 6px);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .container {
+            max-width: 800px;
+            width: 100%;
+            background: rgba(15, 20, 35, 0.55);
+            backdrop-filter: blur(14px);
+            border-radius: 48px;
+            border: 1px solid rgba(0, 255, 255, 0.25);
+            box-shadow: 0 25px 45px rgba(0, 0, 0, 0.5), 0 0 20px rgba(0, 255, 255, 0.2);
+            padding: 30px 28px;
+            transition: all 0.3s ease;
+            z-index: 2;
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #aaffff, #6c63ff, #ff6ac4);
+            background-clip: text;
+            -webkit-background-clip: text;
+            color: transparent;
+            margin-bottom: 20px;
+            letter-spacing: -0.5px;
+            text-shadow: 0 0 8px rgba(0,255,255,0.3);
+        }
+
+        .sub {
+            text-align: center;
+            color: #8b93b0;
+            margin-bottom: 28px;
+            font-size: 0.85rem;
+            border-bottom: 1px dashed rgba(108, 99, 255, 0.4);
+            display: inline-block;
+            width: auto;
+            margin-left: auto;
+            margin-right: auto;
+            padding-bottom: 6px;
+        }
+
+        .add-task-form {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 35px;
+            flex-wrap: wrap;
+        }
+
+        .add-task-form input {
+            flex: 1;
+            background: rgba(10, 14, 23, 0.7);
+            border: 1px solid rgba(108, 99, 255, 0.5);
+            border-radius: 60px;
+            padding: 14px 20px;
+            font-size: 1rem;
+            color: #f0f3ff;
+            transition: 0.25s;
+            outline: none;
+            font-weight: 500;
+        }
+
+        .add-task-form input:focus {
+            border-color: #0ff;
+            box-shadow: 0 0 12px rgba(0, 255, 255, 0.4);
+            background: rgba(20, 25, 45, 0.9);
+        }
+
+        .add-task-form input::placeholder {
+            color: #6a6f8a;
+            font-weight: 400;
+        }
+
+        .add-task-form button {
+            background: linear-gradient(95deg, #6c63ff, #3b3b98);
+            border: none;
+            border-radius: 60px;
+            padding: 0 28px;
+            font-weight: bold;
+            font-size: 1rem;
+            color: white;
+            cursor: pointer;
+            transition: 0.2s;
+            box-shadow: 0 4px 12px rgba(108, 99, 255, 0.3);
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .add-task-form button:hover {
+            transform: scale(1.02);
+            background: linear-gradient(95deg, #7f76ff, #4e4eb8);
+            box-shadow: 0 6px 18px rgba(0, 255, 255, 0.4);
+        }
+
+        .tasks-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            max-height: 460px;
+            overflow-y: auto;
+            padding-right: 6px;
+        }
+
+        .tasks-list::-webkit-scrollbar {
+            width: 5px;
+        }
+
+        .tasks-list::-webkit-scrollbar-track {
+            background: #1e1f2c;
+            border-radius: 10px;
+        }
+
+        .tasks-list::-webkit-scrollbar-thumb {
+            background: #6c63ff;
+            border-radius: 10px;
+        }
+
+        .task-item {
+            background: rgba(12, 16, 28, 0.7);
+            backdrop-filter: blur(4px);
+            border-radius: 28px;
+            padding: 14px 20px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            border: 1px solid rgba(108, 99, 255, 0.3);
+            transition: all 0.2s ease;
+        }
+
+        .task-item:hover {
+            border-color: rgba(0, 255, 255, 0.6);
+            background: rgba(20, 25, 48, 0.85);
+            transform: translateX(4px);
+            box-shadow: 0 5px 12px rgba(0,0,0,0.3);
+        }
+
+        .task-check {
+            width: 22px;
+            height: 22px;
+            cursor: pointer;
+            accent-color: #0ff;
+            filter: drop-shadow(0 0 3px cyan);
+        }
+
+        .task-content {
+            flex: 1;
+        }
+
+        .task-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #eef5ff;
+            word-break: break-word;
+            transition: 0.1s;
+        }
+
+        .task-title.completed {
+            text-decoration: line-through;
+            color: #6c86a3;
+            text-decoration-thickness: 2px;
+            text-decoration-color: #0ff;
+        }
+
+        .task-description {
+            font-size: 0.75rem;
+            color: #8f9bb5;
+            margin-top: 6px;
+            letter-spacing: 0.2px;
+        }
+
+        .delete-btn {
+            background: rgba(255, 70, 100, 0.18);
+            border: 1px solid rgba(255, 70, 100, 0.5);
+            border-radius: 40px;
+            padding: 8px 18px;
+            font-weight: 600;
+            color: #ff8a9f;
+            cursor: pointer;
+            transition: 0.2s;
+            font-size: 0.8rem;
+            backdrop-filter: blur(4px);
+        }
+
+        .delete-btn:hover {
+            background: rgba(255, 70, 100, 0.4);
+            color: white;
+            border-color: #ff477e;
+            box-shadow: 0 0 10px rgba(255, 70, 100, 0.5);
+        }
+
+        .empty-message {
+            text-align: center;
+            padding: 45px 20px;
+            color: #7e84a3;
+            font-style: italic;
+            background: rgba(0,0,0,0.2);
+            border-radius: 48px;
+            backdrop-filter: blur(4px);
+        }
+
+        .loading {
+            text-align: center;
+            color: #0ff;
+            padding: 20px;
+            font-weight: bold;
+            text-shadow: 0 0 5px cyan;
+        }
+
+        .error {
+            background: rgba(255, 60, 90, 0.2);
+            border-left: 4px solid #ff3c5a;
+            color: #ffb7c3;
+            padding: 12px 18px;
+            border-radius: 30px;
+            margin-bottom: 20px;
+            text-align: center;
+            backdrop-filter: blur(8px);
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 30px;
+            font-size: 0.7rem;
+            color: #5f6a8a;
+            border-top: 1px dashed rgba(108, 99, 255, 0.3);
+            padding-top: 18px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>✦ NEON TASKS ✦</h1>
+    <div style="text-align: center;"><span class="sub"> powered by FastAPI + fetch</span></div>
+
+    <div id="errorMessage" class="error" style="display: none;"></div>
+
+    <form id="taskForm" class="add-task-form">
+        <input type="text" id="taskTitle" placeholder=" Название задачи..." required>
+        <input type="text" id="taskDesc" placeholder=" Описание (опционально)">
+        <button type="submit">Добавить</button>
+    </form>
+
+    <div id="loadingIndicator" class="loading" style="display: none;">🌀 загрузка задач...</div>
+
+    <ul id="tasksList" class="tasks-list">
+        <li class="empty-message">💫 Загрузка...</li>
+    </ul>
+    <footer>✔️ клик на чекбокс — выполнить • удалить — одним нажатием</footer>
+</div>
+
+<script>
+    const API_BASE = 'http://127.0.0.1:8000';
+    let tasks = [];
+
+    const tasksListEl = document.getElementById('tasksList');
+    const loadingEl = document.getElementById('loadingIndicator');
+    const errorMessageEl = document.getElementById('errorMessage');
+
+    function showError(text) {
+        errorMessageEl.textContent = text;
+        errorMessageEl.style.display = 'block';
+        setTimeout(() => {
+            errorMessageEl.style.display = 'none';
+        }, 4000);
+    }
+
+    async function loadTasks() {
+        loadingEl.style.display = 'block';
+        try {
+            const response = await fetch(`${API_BASE}/tasks`);
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            tasks = await response.json();
+            renderTasks();
+        } catch (error) {
+            console.error(error);
+            showError('❌ Сервер не отвечает. Запустите uvicorn на 127.0.0.1:8000');
+            tasksListEl.innerHTML = '<li class="empty-message">⚠️ Нет связи с API</li>';
+        } finally {
+            loadingEl.style.display = 'none';
+        }
+    }
+
+    function renderTasks() {
+        if (!tasks.length) {
+            tasksListEl.innerHTML = '<li class="empty-message">✨ Список пуст. Добавь первую задачу!</li>';
+            return;
+        }
+        tasksListEl.innerHTML = '';
+        tasks.forEach(task => {
+            const li = document.createElement('li');
+            li.className = 'task-item';
+            li.dataset.id = task.id;
+
+            const checkBox = document.createElement('input');
+            checkBox.type = 'checkbox';
+            checkBox.className = 'task-check';
+            checkBox.checked = task.completed;
+            checkBox.addEventListener('change', () => toggleComplete(task.id, checkBox.checked));
+
+            const contentDiv = document.createElement('div');
+            contentDiv.className = 'task-content';
+
+            const titleSpan = document.createElement('div');
+            titleSpan.className = `task-title ${task.completed ? 'completed' : ''}`;
+            titleSpan.textContent = task.title;
+
+            contentDiv.appendChild(titleSpan);
+            if (task.description) {
+                const descSpan = document.createElement('div');
+                descSpan.className = 'task-description';
+                descSpan.textContent = task.description;
+                contentDiv.appendChild(descSpan);
+            }
+
+            const deleteBtn = document.createElement('button');
+            deleteBtn.textContent = 'Удалить';
+            deleteBtn.className = 'delete-btn';
+            deleteBtn.addEventListener('click', () => deleteTask(task.id));
+
+            li.appendChild(checkBox);
+            li.appendChild(contentDiv);
+            li.appendChild(deleteBtn);
+            tasksListEl.appendChild(li);
+        });
+    }
+
+    async function toggleComplete(taskId, completed) {
+        const task = tasks.find(t => t.id === taskId);
+        if (!task) return;
+        const updatedTask = {
+            title: task.title,
+            description: task.description || null,
+            completed: completed
+        };
+        try {
+            const response = await fetch(`${API_BASE}/tasks/${taskId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(updatedTask)
+            });
+            if (!response.ok) throw new Error();
+            task.completed = completed;
+            renderTasks();
+        } catch (error) {
+            showError('Не удалось обновить статус');
+            loadTasks();
+        }
+    }
+
+    async function deleteTask(taskId) {
+        try {
+            const response = await fetch(`${API_BASE}/tasks/${taskId}`, { method: 'DELETE' });
+            if (response.status !== 204) throw new Error();
+            tasks = tasks.filter(t => t.id !== taskId);
+            renderTasks();
+        } catch (error) {
+            showError('Ошибка удаления');
+            loadTasks();
+        }
+    }
+
+    async function addTask(title, description) {
+        const newTask = {
+            title: title.trim(),
+            description: description.trim() || null,
+            completed: false
+        };
+        try {
+            const response = await fetch(`${API_BASE}/tasks`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(newTask)
+            });
+            if (!response.ok) throw new Error();
+            const created = await response.json();
+            tasks.push(created);
+            renderTasks();
+            return true;
+        } catch (error) {
+            showError('Не удалось добавить');
+            return false;
+        }
+    }
+
+    document.getElementById('taskForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const titleInput = document.getElementById('taskTitle');
+        const descInput = document.getElementById('taskDesc');
+        if (!titleInput.value.trim()) {
+            showError('Название задачи не может быть пустым');
+            return;
+        }
+        const ok = await addTask(titleInput.value, descInput.value);
+        if (ok) {
+            titleInput.value = '';
+            descInput.value = '';
+            titleInput.focus();
+        }
+    });
+
+    loadTasks();
+</script>
+</body>
+</html>
